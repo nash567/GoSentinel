@@ -51,10 +51,16 @@ func (l *SLogger) Warn(msg string, args ...any) {
 func (l *SLogger) Error(msg string, args ...any) {
 	l.logger.Error(msg, args...)
 }
-
+func (l *SLogger) Errorf(format string, args ...interface{}) {
+	l.logger.Error(fmt.Sprintf(format, args...))
+}
 func (l *SLogger) Fatal(msg string, args ...any) {
 	l.logger.Log(context.Background(), model.LevelFatal.SLogLevel(), msg, args...)
 	panic(msg)
+}
+func (l *SLogger) Fatalf(format string, args ...interface{}) {
+	l.logger.Log(context.Background(), model.LevelFatal.SLogLevel(), fmt.Sprintf(format, args...))
+	panic(fmt.Sprintf(format, args...))
 }
 
 func (l *SLogger) WithField(key string, value any) model.Logger {
@@ -63,6 +69,7 @@ func (l *SLogger) WithField(key string, value any) model.Logger {
 		programLevel: l.programLevel,
 	}
 }
+
 func (l *SLogger) WithFields(field model.Fields) model.Logger {
 	attributes := make([]interface{}, 0)
 	for key, value := range field {

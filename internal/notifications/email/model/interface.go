@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"log"
 )
 
 type Mailer interface {
@@ -12,7 +11,7 @@ type Mailer interface {
 }
 
 type Service interface {
-	Send(_ context.Context, log log.Logger, mail Mail) error
+	Send(_ context.Context, mail Mailer) error
 }
 
 type Mail struct {
@@ -29,14 +28,14 @@ func NewMail(to []string, subject string, body string) Mail {
 	}
 }
 
-func (m *Mail) To() []string {
+func (m Mail) To() []string {
 	return m.to
 }
 
-func (m *Mail) Subject() string {
+func (m Mail) Subject() string {
 	return m.subject
 }
 
-func (m *Mail) Body() string {
+func (m Mail) Body() string {
 	return m.body
 }

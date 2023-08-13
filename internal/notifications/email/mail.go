@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	log "github.com/nash567/GoSentinel/pkg/logger/model"
-
 	"github.com/nash567/GoSentinel/internal/notifications/email/config"
 	"github.com/nash567/GoSentinel/internal/notifications/email/model"
 	"gopkg.in/gomail.v2"
@@ -32,7 +30,7 @@ func NewService(cfg *config.Config) *Service {
 	}
 }
 
-func (s *Service) Send(_ context.Context, log log.Logger, mail model.Mail) error {
+func (s *Service) Send(_ context.Context, mail model.Mailer) error {
 	m := gomail.NewMessage()
 
 	m.SetHeader(fromHeader, s.cfg.From)
@@ -42,7 +40,7 @@ func (s *Service) Send(_ context.Context, log log.Logger, mail model.Mail) error
 
 	// Send the email
 	if err := s.dialer.DialAndSend(m); err != nil {
-		log.Error("sending email", err)
+		// log.Error("sending email", err)
 		return fmt.Errorf("sending mail : %w", err)
 	}
 	return nil
