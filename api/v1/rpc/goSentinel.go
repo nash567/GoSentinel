@@ -44,6 +44,7 @@ func (s *Server) VerifyApplication(ctx context.Context, req *goSentinel.VerifyAp
 	if err != nil {
 		return nil, status.Error(codes.PermissionDenied, fmt.Sprintf("failed to verify application: %v", err))
 	}
+
 	return &emptypb.Empty{}, nil
 }
 
