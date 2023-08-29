@@ -7,7 +7,8 @@ import (
 type Service interface {
 	SendVerifcationNotification(ctx context.Context, email string, name string) (*string, error)
 	VerifyApplication(ctx context.Context, key string) error
-	GetApplicationSecret(ctx context.Context, token string) (*Application, error)
+	GetApplicationIdentity(ctx context.Context) (*ApplicationSecret, error)
+	CreateApplicationIdentity(ctx context.Context) error
 }
 
 type Repository interface {

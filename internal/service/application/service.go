@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	notification "github.com/nash567/GoSentinel/internal/notifications/email/model"
 	"github.com/nash567/GoSentinel/internal/service/application/config"
 	authConfig "github.com/nash567/GoSentinel/internal/service/auth/config"
@@ -56,7 +57,7 @@ func (s *Service) SendVerifcationNotification(ctx context.Context, email, name s
 		Email: []string{email},
 	})
 	if err == nil && application != nil {
-		return nil, fmt.Errorf("user exist already")
+		return nil, fmt.Errorf("application exist already")
 	}
 
 	//generate secret
@@ -117,18 +118,11 @@ func (s *Service) VerifyApplication(ctx context.Context, key string) error {
 	if err != nil {
 		return fmt.Errorf("unmarshal zip status from cache: %w", err)
 	}
-
-	creds, err := s.authSvc.GenerateCredentials(s.authConfig.SecretLength)
+	id, err := uuid.NewRandom()
 	if err != nil {
-		return fmt.Errorf("svc:application -> generateCredentials: %w", err)
+		return fmt.Errorf("generating uuid: %v", err)
 	}
-	secret, err := s.authSvc.EncryptData(creds.Secret, s.authConfig.EncryptionKey)
-	if err != nil {
-		return fmt.Errorf("svc:application -> encrypt: %w", err)
-	}
-
-	application.ID = creds.ID
-	application.Secret = secret
+	application.ID = id.String()
 	application.Status = "active"
 	application.IsVerified = true
 	err = s.repo.RegisterApplication(ctx, application)
@@ -165,32 +159,63 @@ func (s *Service) getTemplate(mailData model.MailData) (string, error) {
 // 	return u.String(), nil
 // }
 
-func (s *Service) AuthenticateApplication(ctx context.Context, input model.Application) error {
+// func (s *Service) AuthenticateApplication(ctx context.Context, input model.ApplicationSecret) error {
+// 	application, err := s.repo.GetApplication(ctx, &model.Filter{
+// 		Email: []string{input.Email},
+// 		ID:    []string{input.ID},
+// 	})
+// 	if err != nil {
+// 		return fmt.Errorf("application not found: %w", err)
+// 	}
+
+// 	verified, err := s.authSvc.VerifyApplicationIdentity(ctx, authModel.Credentials{
+// 		ID:     input.ID,
+// 		Secret: input.Secret,
+// 	})
+// 	if err != nil {
+// 		return fmt.Errorf("verify application identity: %w", err)
+// 	}
+
+// 	if verified {
+// 		token, err := s.authSvc.GenerateJWtToken(authModel.Claims{
+// 			Email: application.Email,
+// 			Name:  application.Name,
+// 			RegisteredClaims: jwt.RegisteredClaims{
+// 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * s.authConfig.JWTExpiration)),
+// 			},
+// 		})
+// 		if err != nil {
+// 			return fmt.Errorf("error generatig token :%w", err)
+// 		}
+// 		fmt.Println(token)
+// 	}
+
+//		return fmt.Errorf("application secret is wrong")
+//	}
+func (s *Service) CreateApplicationIdentity(ctx context.Context) error {
+	claims, ok := authModel.GetJWTClaimsFromContext(ctx)
+	if !ok {
+		return fmt.Errorf("claims not found in context")
+	}
 	application, err := s.repo.GetApplication(ctx, &model.Filter{
-		Email: []string{input.Email},
+		Email: []string{claims.Email},
 	})
-	if err == nil && application != nil {
-		return fmt.Errorf("user exist already")
-	}
-
-	secret, err := s.authSvc.DecryptData(application.Secret, s.authConfig.EncryptionKey)
 	if err != nil {
-		return fmt.Errorf("error decrypting :%w", err)
+		return fmt.Errorf("error getting application :%w", err)
 	}
-
-	if string(secret) == input.Secret {
-		return nil
+	err = s.authSvc.CreateApplicationIdentity(ctx, application.ID)
+	if err != nil {
+		return fmt.Errorf("error creating application identity: %w", err)
 	}
+	return nil
 
-	return fmt.Errorf("user unauthenticated")
 }
 
-func (s *Service) GetApplicationSecret(ctx context.Context, token string) (*model.Application, error) {
-	claims, err := s.authSvc.VerifyJWTToken(token)
-	if err != nil {
-		return nil, fmt.Errorf("svc:application -> verifyToken: %w", err)
+func (s *Service) GetApplicationIdentity(ctx context.Context) (*model.ApplicationSecret, error) {
+	claims, ok := authModel.GetJWTClaimsFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("claims not found in context")
 	}
-
 	application, err := s.repo.GetApplication(ctx, &model.Filter{
 		Email: []string{claims.Email},
 	})
@@ -198,16 +223,18 @@ func (s *Service) GetApplicationSecret(ctx context.Context, token string) (*mode
 		return nil, fmt.Errorf("error getting application :%w", err)
 	}
 
-	if application.SecretViewed {
-		return nil, fmt.Errorf("secret already viewed")
-	} else {
-		err := s.repo.UpdateApplication(ctx, &model.UpdateApplication{
-			ID: application.ID,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error updating  application :%w", err)
-		}
-		return application, nil
-
+	applicationIdentity, err := s.authSvc.GetApplicationIdentity(ctx, application.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting application identity :%w", err)
 	}
+	err = s.authSvc.UpdateApplicationIdentity(ctx, application.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error updating  application identity :%w", err)
+	}
+
+	return &model.ApplicationSecret{
+		ApplicationID:     applicationIdentity.ApplicationID,
+		ApplicationSecret: applicationIdentity.Secret,
+	}, nil
+
 }

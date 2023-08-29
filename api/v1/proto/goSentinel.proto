@@ -39,7 +39,6 @@ message User{
     string name = 1;
     string email=2;
     string password = 3;
-    string token = 4;
     string role = 5;
  }
 
@@ -51,10 +50,49 @@ message User{
    string token = 1;
  }
 
- message GetApplicationSecretResponse{
-   string clientID = 1;
-   string clientSecret=2;
+ message Applicationcredentials{
+   string applicationID = 1;
+   string applicationSecret=2;
  }
+
+ message GetApplicationTokenResponse{
+  string token = 1;
+ }
+
+ message ApplicationSecretRequest {
+  string applicationID = 1;
+ }
+
+ message LoginUserRequest {
+  string email = 1;
+  string password = 2;
+ }
+
+ message LoginUserResponse{
+  string token = 1;
+ }
+
+ message GetUserRequest{
+  string ID = 1;
+  string email = 2;
+ }
+
+ message GetUserResponse{
+  string ID = 1;
+  string name = 2;
+  string email = 3;
+ }
+
+
+message DeleteUserRequest{
+  string ID = 1;
+}
+
+message UpdateUserRequest{
+  string ID = 1;
+  string name=2;
+  string password=3;
+}
 
  service goSentinelService{
     rpc SendVerifcationNotification(SendApplicationNotificationRequest) returns (SendApplicationNotificationResponse);  
@@ -63,11 +101,27 @@ message User{
           get: "/v1/verify/{key}"
       };
   };
-  rpc GetApplicationSecrets(google.protobuf.Empty)returns (GetApplicationSecretResponse){
+  rpc GetApplicationSecret(google.protobuf.Empty)returns (Applicationcredentials){
    option (google.api.http)={
-      get: "/v1/getSecrets"
+      get: "/v1/secret"
   };
   }
+  rpc CreateApplicationSecret(google.protobuf.Empty)returns (google.protobuf.Empty){
+    option (google.api.http)={
+       post: "/v1/secret"
+   };
+   }
 
+  rpc GetApplicationToken(Applicationcredentials)returns (GetApplicationTokenResponse);
+
+  // user rpcs
+
+  rpc RegisterUser(RegisterUserRequest) returns (google.protobuf.Empty);
+  rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
+  rpc GetUser(GetUserRequest)returns (GetUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty);
+  rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty);
+  
  }
+
 

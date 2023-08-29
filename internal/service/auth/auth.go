@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -13,20 +14,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/nash567/GoSentinel/internal/service/auth/config"
 	"github.com/nash567/GoSentinel/internal/service/auth/model"
 )
-
-type Service struct {
-	config *config.Config
-}
-
-func NewService(config *config.Config) *Service {
-	return &Service{
-		config: config,
-	}
-
-}
 
 func (s *Service) GenerateJWtToken(claims model.Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -78,8 +67,8 @@ func (s *Service) GenerateCredentials(length int) (*model.Credentials, error) {
 	if err != nil {
 		return nil, fmt.Errorf("generating uuid: %v", err)
 	}
-	creds.ID = id
-	creds.Secret = secret
+	creds.ApplicationID = id
+	creds.ApplicationSecret = secret
 
 	return creds, nil
 }
@@ -148,4 +137,28 @@ func (s *Service) DecryptData(encryptedData string, key string) ([]byte, error) 
 	stream.XORKeyStream(ciphertext, ciphertext)
 
 	return ciphertext, nil
+}
+
+func (s *Service) GetApplicationToken(ctx context.Context, credentials model.Credentials) (*string, error) {
+	verified, err := s.VerifyApplicationIdentity(ctx, credentials)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify application identity :%w", err)
+	}
+
+	if verified {
+		token, err := s.GenerateJWtToken(model.Claims{
+			ApplicationID: credentials.ApplicationID,
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.ApplicationJWTExpiry * time.Minute)),
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate token :%w", err)
+		}
+
+		return &token, nil
+
+	}
+
+	return nil, fmt.Errorf("application not valid")
 }

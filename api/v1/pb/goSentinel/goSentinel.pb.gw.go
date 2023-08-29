@@ -84,20 +84,38 @@ func local_request_GoSentinelService_VerifyApplication_0(ctx context.Context, ma
 
 }
 
-func request_GoSentinelService_GetApplicationSecrets_0(ctx context.Context, marshaler runtime.Marshaler, client GoSentinelServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_GoSentinelService_GetApplicationSecret_0(ctx context.Context, marshaler runtime.Marshaler, client GoSentinelServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq emptypb.Empty
 	var metadata runtime.ServerMetadata
 
-	msg, err := client.GetApplicationSecrets(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetApplicationSecret(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GoSentinelService_GetApplicationSecrets_0(ctx context.Context, marshaler runtime.Marshaler, server GoSentinelServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_GoSentinelService_GetApplicationSecret_0(ctx context.Context, marshaler runtime.Marshaler, server GoSentinelServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq emptypb.Empty
 	var metadata runtime.ServerMetadata
 
-	msg, err := server.GetApplicationSecrets(ctx, &protoReq)
+	msg, err := server.GetApplicationSecret(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_GoSentinelService_CreateApplicationSecret_0(ctx context.Context, marshaler runtime.Marshaler, client GoSentinelServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq emptypb.Empty
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.CreateApplicationSecret(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_GoSentinelService_CreateApplicationSecret_0(ctx context.Context, marshaler runtime.Marshaler, server GoSentinelServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq emptypb.Empty
+	var metadata runtime.ServerMetadata
+
+	msg, err := server.CreateApplicationSecret(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -133,7 +151,7 @@ func RegisterGoSentinelServiceHandlerServer(ctx context.Context, mux *runtime.Se
 
 	})
 
-	mux.Handle("GET", pattern_GoSentinelService_GetApplicationSecrets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GoSentinelService_GetApplicationSecret_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -141,12 +159,12 @@ func RegisterGoSentinelServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/goSentinel.GoSentinelService/GetApplicationSecrets", runtime.WithHTTPPathPattern("/v1/getSecrets"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/goSentinel.GoSentinelService/GetApplicationSecret", runtime.WithHTTPPathPattern("/v1/secret"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GoSentinelService_GetApplicationSecrets_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GoSentinelService_GetApplicationSecret_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -154,7 +172,32 @@ func RegisterGoSentinelServiceHandlerServer(ctx context.Context, mux *runtime.Se
 			return
 		}
 
-		forward_GoSentinelService_GetApplicationSecrets_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GoSentinelService_GetApplicationSecret_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_GoSentinelService_CreateApplicationSecret_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/goSentinel.GoSentinelService/CreateApplicationSecret", runtime.WithHTTPPathPattern("/v1/secret"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_GoSentinelService_CreateApplicationSecret_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GoSentinelService_CreateApplicationSecret_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -221,25 +264,47 @@ func RegisterGoSentinelServiceHandlerClient(ctx context.Context, mux *runtime.Se
 
 	})
 
-	mux.Handle("GET", pattern_GoSentinelService_GetApplicationSecrets_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GoSentinelService_GetApplicationSecret_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/goSentinel.GoSentinelService/GetApplicationSecrets", runtime.WithHTTPPathPattern("/v1/getSecrets"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/goSentinel.GoSentinelService/GetApplicationSecret", runtime.WithHTTPPathPattern("/v1/secret"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GoSentinelService_GetApplicationSecrets_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GoSentinelService_GetApplicationSecret_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GoSentinelService_GetApplicationSecrets_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GoSentinelService_GetApplicationSecret_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_GoSentinelService_CreateApplicationSecret_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/goSentinel.GoSentinelService/CreateApplicationSecret", runtime.WithHTTPPathPattern("/v1/secret"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_GoSentinelService_CreateApplicationSecret_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_GoSentinelService_CreateApplicationSecret_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -249,11 +314,15 @@ func RegisterGoSentinelServiceHandlerClient(ctx context.Context, mux *runtime.Se
 var (
 	pattern_GoSentinelService_VerifyApplication_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "verify", "key"}, ""))
 
-	pattern_GoSentinelService_GetApplicationSecrets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "getSecrets"}, ""))
+	pattern_GoSentinelService_GetApplicationSecret_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "secret"}, ""))
+
+	pattern_GoSentinelService_CreateApplicationSecret_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "secret"}, ""))
 )
 
 var (
 	forward_GoSentinelService_VerifyApplication_0 = runtime.ForwardResponseMessage
 
-	forward_GoSentinelService_GetApplicationSecrets_0 = runtime.ForwardResponseMessage
+	forward_GoSentinelService_GetApplicationSecret_0 = runtime.ForwardResponseMessage
+
+	forward_GoSentinelService_CreateApplicationSecret_0 = runtime.ForwardResponseMessage
 )

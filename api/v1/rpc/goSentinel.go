@@ -8,8 +8,8 @@ import (
 	"github.com/nash567/GoSentinel/api/v1/pb/goSentinel"
 	application "github.com/nash567/GoSentinel/internal/service/application/model"
 	"github.com/nash567/GoSentinel/internal/service/auth"
+	authModel "github.com/nash567/GoSentinel/internal/service/auth/model"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -17,11 +17,11 @@ import (
 type Server struct {
 	goSentinel.UnimplementedGoSentinelServiceServer
 	applicationSvc application.Service
-	authSvc        auth.Service
+	authSvc        *auth.Service
 	Key            string
 }
 
-func NewServer(applicationSvc application.Service, authSvc auth.Service, key string) *Server {
+func NewServer(applicationSvc application.Service, authSvc *auth.Service, key string) *Server {
 	return &Server{
 		applicationSvc: applicationSvc,
 		authSvc:        authSvc,
@@ -44,30 +44,37 @@ func (s *Server) VerifyApplication(ctx context.Context, req *goSentinel.VerifyAp
 	if err != nil {
 		return nil, status.Error(codes.PermissionDenied, fmt.Sprintf("failed to verify application: %v", err))
 	}
-
 	return &emptypb.Empty{}, nil
 }
-
-func (s *Server) GetApplicationSecrets(ctx context.Context, req *emptypb.Empty) (*goSentinel.GetApplicationSecretResponse, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.PermissionDenied, fmt.Sprintf("failed to verify application"))
-	}
-
-	authHeader, ok := md["authorization"]
-	if !ok || len(authHeader) == 0 {
-		return nil, status.Error(codes.PermissionDenied, fmt.Sprintf("failed to verify application"))
-	}
-	res, err := s.applicationSvc.GetApplicationSecret(ctx, authHeader[0])
+func (s *Server) CreateApplicationSecret(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
+	err := s.applicationSvc.CreateApplicationIdentity(ctx)
 	if err != nil {
-		return nil, status.Error(codes.PermissionDenied, fmt.Sprintf("failed to verify application: %v", err))
+		return nil, status.Error(codes.PermissionDenied, fmt.Sprintf("failed to create application identity: %v", err))
 	}
-	secret, err := s.authSvc.DecryptData(res.Secret, s.Key)
+	return &emptypb.Empty{}, nil
+}
+func (s *Server) GetApplicationSecret(ctx context.Context, _ *emptypb.Empty) (*goSentinel.Applicationcredentials, error) {
+
+	res, err := s.applicationSvc.GetApplicationIdentity(ctx)
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to decrypt secret: %v", err))
+		return nil, status.Error(codes.PermissionDenied, fmt.Sprintf("failed to get application identity: %v", err))
 	}
-	return &goSentinel.GetApplicationSecretResponse{
-		ClientID:     res.ID,
-		ClientSecret: string(secret),
+
+	return &goSentinel.Applicationcredentials{
+		ApplicationID:     res.ApplicationID,
+		ApplicationSecret: res.ApplicationSecret,
+	}, nil
+}
+
+func (s *Server) GetApplicationToken(ctx context.Context, req *goSentinel.Applicationcredentials) (*goSentinel.GetApplicationTokenResponse, error) {
+	token, err := s.authSvc.GetApplicationToken(ctx, authModel.Credentials{
+		ApplicationID:     req.ApplicationID,
+		ApplicationSecret: req.ApplicationSecret,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("appliation not verified: %v", err)
+	}
+	return &goSentinel.GetApplicationTokenResponse{
+		Token: aws.StringValue(token),
 	}, nil
 }

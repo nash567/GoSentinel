@@ -103,9 +103,7 @@ func (a *Application) Start(ctx context.Context) {
 			a.log.Fatalf("failed to listen: %v", err)
 		}
 
-		a.grpcServer = grpc.NewServer()
-		a.registerGRPCEndpoints(a.services, a.log)
-
+		a.grpcServer = a.registerGRPCEndpoints(a.services, a.log)
 		if err := a.grpcServer.Serve(lis); err != nil {
 			a.log.Fatalf("failed to serve: %v", err)
 		}
@@ -140,11 +138,13 @@ func (a *Application) registerHTTPEndpoints(ctx context.Context, cfg *config.Con
 func (a *Application) registerGRPCEndpoints(services *services, log logModel.Logger) *grpc.Server {
 	// interceptor := authInterceptor.NewAuthInterceptor(log, true, *services.AuthSvc)
 	opts := []grpc.ServerOption{
+		grpc.UnaryInterceptor(a.services.authSvc.AuthenticationInterceptor),
 		// intercept the request to check the token
 		// grpc.UnaryInterceptor(interceptor.Auth),
 	}
 	grpcServer := grpc.NewServer(opts...)
-	goSentinel.RegisterGoSentinelServiceServer(a.grpcServer, rpc.NewServer(a.services.applicationSvc, a.services.authSvc, a.cfg.AuthConfig.EncryptionKey))
+
+	goSentinel.RegisterGoSentinelServiceServer(grpcServer, rpc.NewServer(a.services.applicationSvc, a.services.authSvc, a.cfg.AuthConfig.EncryptionKey))
 
 	return grpcServer
 }

@@ -6,12 +6,16 @@ const (
 
 type Application struct {
 	ID           string `json:"id"`
-	Secret       string `json:"secret"`
 	Name         string `json:"name"`
 	Email        string `json:"email"`
 	Status       string `json:"status"`
 	IsVerified   bool   `json:"is_verified"`
 	SecretViewed bool   `json:"secret_viewed"`
+}
+
+type ApplicationSecret struct {
+	ApplicationID     string `json:"id"`
+	ApplicationSecret string `json:"secret"`
 }
 
 type MailData struct {
@@ -20,8 +24,8 @@ type MailData struct {
 }
 
 type VerifyApplicationResponse struct {
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
+	ApplicationID     string `json:"client_id"`
+	ApplicationSecret string `json:"client_secret"`
 }
 type UpdateApplication struct {
 	ID           string `json:"id"`

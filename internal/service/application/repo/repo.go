@@ -26,13 +26,12 @@ func (r *Repository) RegisterApplication(ctx context.Context, application model.
 
 	// insert into application table
 	_, err = r.db.ExecContext(ctx,
-		registerApplication,
+		createApplication,
 		application.ID,
 		application.Name,
 		application.Email,
 		application.Status,
 		application.IsVerified,
-		application.Secret,
 	)
 	if err != nil {
 		return fmt.Errorf("insert application: %w", err)
@@ -53,12 +52,10 @@ func (r *Repository) GetApplication(ctx context.Context, filter *model.Filter) (
 
 	err := r.db.QueryRowContext(ctx, q, values...).Scan(
 		&application.ID,
-		&application.Secret,
 		&application.Name,
 		&application.Email,
 		&application.IsVerified,
 		&application.Status,
-		&application.SecretViewed,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get workspaces from db: %w", err)
