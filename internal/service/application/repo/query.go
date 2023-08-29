@@ -7,7 +7,6 @@ const (
 					name text,
 					email text UNIQUE,
 					password text,
-					token text,
 					role text,
 					is_active boolean,
 					created_at timestamp default current_timestamp,

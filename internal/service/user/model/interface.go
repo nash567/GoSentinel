@@ -13,9 +13,9 @@ type Repository interface {
 }
 
 type common interface {
-	RegisterUser(context.Context, User) error
-	LoginUser(ctx context.Context, email string, password string) error
-	GetUser(context.Context, Filter) (User, error)
-	UpdateUser(context.Context, User) error
-	DeleteUser(context.Context, string) error
+	RegisterUser(context.Context, User, string) error
+	LoginUser(ctx context.Context, email string, password string, applicationID string) error
+	GetUser(context.Context, Filter, string) (*User, error)
+	UpdateUser(context.Context, UpdateUser, string) error
+	DeleteUser(context.Context, string, string) error
 }
