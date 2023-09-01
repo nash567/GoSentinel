@@ -3,7 +3,7 @@ package repo
 const (
 	createSchema     = `Create Schema %s`
 	createUsersTable = `Create table %s.users (
-					id text PRIMARY KEY,
+					id UUID PRIMARY KEY,
 					name text,
 					email text UNIQUE,
 					password text,

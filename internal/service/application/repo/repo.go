@@ -49,7 +49,6 @@ func (r *Repository) RegisterApplication(ctx context.Context, application model.
 func (r *Repository) GetApplication(ctx context.Context, filter *model.Filter) (*model.Application, error) {
 	var application model.Application
 	q, values := buildQuery(filter)
-
 	err := r.db.QueryRowContext(ctx, q, values...).Scan(
 		&application.ID,
 		&application.Name,
@@ -58,7 +57,7 @@ func (r *Repository) GetApplication(ctx context.Context, filter *model.Filter) (
 		&application.Status,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("get workspaces from db: %w", err)
+		return nil, fmt.Errorf("application not found in db: %w", err)
 	}
 	return &application, nil
 }

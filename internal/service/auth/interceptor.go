@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/nash567/GoSentinel/api/v1/pb/goSentinel"
 	"github.com/nash567/GoSentinel/internal/service/auth/model"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -26,18 +27,37 @@ func (s *Service) AuthenticationInterceptor(
 	start := time.Now()
 
 	var (
-		ctxWithClaims context.Context
+		ctxWithClaims context.Context = ctx
 		err           error
 	)
 
 	if info.FullMethod == "/goSentinel.goSentinelService/GetApplicationSecret" {
-		if ctxWithClaims, err = s.authenticate(ctx); err != nil {
-			return nil, err
+
+		if ctxWithClaims, err = s.authenticate(ctx, ""); err != nil {
+			return nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
 		}
 	} else if info.FullMethod == "/goSentinel.goSentinelService/CreateApplicationSecret" {
-		fmt.Println("hey i m inside")
-		if ctxWithClaims, err = s.authenticate(ctx); err != nil {
-			return nil, err
+		if ctxWithClaims, err = s.authenticate(ctx, ""); err != nil {
+			return nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
+		}
+	} else if info.FullMethod == "/goSentinel.goSentinelService/RegisterUser" {
+		if ctxWithClaims, err = s.authenticate(ctx, ""); err != nil {
+			return nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
+		}
+	} else if info.FullMethod == "/goSentinel.goSentinelService/GetUser" {
+		request, ok := req.(*goSentinel.GetUserRequest)
+		if !ok {
+			return nil, status.Errorf(codes.NotFound, "request body not found")
+		}
+		if ctxWithClaims, err = s.authenticate(ctx, request.UserToken); err != nil {
+			return nil, status.Errorf(codes.Unauthenticated, "invalid user token")
+		}
+
+	} else if info.FullMethod == "/goSentinel.goSentinelService/LoginUser" {
+		fmt.Println("i m here ")
+		if ctxWithClaims, err = s.authenticate(ctx, ""); err != nil {
+			fmt.Println("err")
+			return nil, status.Errorf(codes.Unauthenticated, "Unauthorized: %v", err)
 		}
 	}
 
@@ -55,7 +75,7 @@ func (s *Service) AuthenticationInterceptor(
 
 // authorize function authorizes the token received from Metadata
 
-func (s *Service) authenticate(ctx context.Context) (context.Context, error) {
+func (s *Service) authenticate(ctx context.Context, userToken string) (context.Context, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "Retrieving metadata is failed")
@@ -63,14 +83,32 @@ func (s *Service) authenticate(ctx context.Context) (context.Context, error) {
 
 	authHeader, ok := md["authorization"]
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "Authorization token is not supplied")
+		return nil, status.Errorf(codes.Unauthenticated, "Authorization token not supplied")
 	}
 
 	token := authHeader[0]
+
 	// validateToken function validates the token
 	claims, err := s.VerifyJWTToken(token)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, err.Error())
+		return nil, status.Errorf(codes.Unauthenticated, "invalid application token: %v", err)
+	}
+
+	// if claims.ApplicationJWTClaims.ApplicationEmail == nil {
+	// 	return nil, status.Errorf(codes.Unauthenticated, "invalid application token: %v", err)
+	// }
+
+	if userToken != "" {
+		if userClaims, err := s.VerifyJWTToken(userToken); err == nil {
+			fmt.Printf("claims are ...%+v", userClaims.UserJWTClaims)
+			if userClaims.UserJWTClaims.UserEmail == nil {
+				return nil, status.Errorf(codes.Unauthenticated, "invalid user token: %v", err)
+			}
+			claims.UserJWTClaims = userClaims.UserJWTClaims
+		} else {
+			return nil, status.Errorf(codes.Unauthenticated, "invalid user token: %v", err)
+		}
+
 	}
 
 	ctxWithClaims := context.WithValue(ctx, model.ContextKeyJWTClaims, claims)

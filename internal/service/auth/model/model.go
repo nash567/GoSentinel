@@ -7,10 +7,19 @@ import (
 )
 
 type Claims struct {
-	Email         string `json:"email"`
-	Name          string `json:"name"`
-	ApplicationID string `json:"application_id"`
+	*ApplicationJWTClaims
+	*UserJWTClaims
 	jwt.RegisteredClaims
+}
+type ApplicationJWTClaims struct {
+	ApplicationEmail *string
+	Name             *string
+	ApplicationID    *string
+}
+
+type UserJWTClaims struct {
+	UserID    *string
+	UserEmail *string
 }
 
 type Credentials struct {

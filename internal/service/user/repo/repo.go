@@ -82,9 +82,9 @@ func (r *Repository) DeleteUser(ctx context.Context, userID string, applicationI
 }
 
 func (r *Repository) GetUser(ctx context.Context, filter model.Filter, applicationID string) (*model.User, error) {
-	var user *model.User
-	query, params := buildFilter(&filter)
-	err := r.db.QueryRow(query, params).Scan(&user.ID, &user.Name, &user.Email)
+	user := &model.User{}
+	q, values := buildFilter(&filter)
+	err := r.db.QueryRow(fmt.Sprintf(getUser+q, pq.QuoteIdentifier(applicationID)), values...).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user not found in db: %w", err)

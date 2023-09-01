@@ -87,10 +87,9 @@ func (s *Service) VerifyApplicationIdentity(ctx context.Context, credentials mod
 	if err != nil {
 		return false, fmt.Errorf("failed to decrypt secret: %w", err)
 	}
-	fmt.Println(string(secretBytes))
-	fmt.Println("application secret", credentials.ApplicationSecret)
+
 	if strings.Compare(string(secretBytes), credentials.ApplicationSecret) != 0 {
-		return false, fmt.Errorf("wrong secret key")
+		return false, fmt.Errorf("invalid application secret or id")
 	} else {
 		return true, nil
 	}

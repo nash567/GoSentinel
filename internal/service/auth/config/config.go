@@ -8,4 +8,5 @@ type Config struct {
 	EncryptionKey        string
 	SecretLength         int
 	ApplicationJWTExpiry time.Duration
+	UserJWTExpiry        time.Duration
 }

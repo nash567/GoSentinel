@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	notification "github.com/nash567/GoSentinel/internal/notifications/email/model"
@@ -92,8 +93,10 @@ func (s *Service) SendVerifcationNotification(ctx context.Context, email, name s
 
 	//generate token
 	token, err := s.authSvc.GenerateJWtToken(authModel.Claims{
-		Email: email,
-		Name:  name,
+		ApplicationJWTClaims: &authModel.ApplicationJWTClaims{
+			ApplicationEmail: aws.String(email),
+			Name:             aws.String(name),
+		},
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * s.authConfig.JWTExpiration)),
 		},
@@ -198,7 +201,7 @@ func (s *Service) CreateApplicationIdentity(ctx context.Context) error {
 		return fmt.Errorf("claims not found in context")
 	}
 	application, err := s.repo.GetApplication(ctx, &model.Filter{
-		Email: []string{claims.Email},
+		Email: []string{aws.StringValue(claims.ApplicationJWTClaims.ApplicationEmail)},
 	})
 	if err != nil {
 		return fmt.Errorf("error getting application :%w", err)
@@ -217,7 +220,7 @@ func (s *Service) GetApplicationIdentity(ctx context.Context) (*model.Applicatio
 		return nil, fmt.Errorf("claims not found in context")
 	}
 	application, err := s.repo.GetApplication(ctx, &model.Filter{
-		Email: []string{claims.Email},
+		Email: []string{aws.StringValue(claims.ApplicationJWTClaims.ApplicationEmail)},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error getting application :%w", err)

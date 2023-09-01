@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/nash567/GoSentinel/api/v1/pb/goSentinel"
 	applicationModel "github.com/nash567/GoSentinel/internal/service/application/model"
-	"github.com/nash567/GoSentinel/internal/service/auth"
 	authModel "github.com/nash567/GoSentinel/internal/service/auth/model"
 	userModel "github.com/nash567/GoSentinel/internal/service/user/model"
 	"google.golang.org/grpc/codes"
@@ -21,25 +20,26 @@ type Server struct {
 	goSentinel.UnimplementedGoSentinelServiceServer
 	applicationSvc applicationModel.Service
 	userSvc        userModel.Service
-	authSvc        *auth.Service
+	authSvc        authModel.Service
 	Key            string
 }
 
-func NewServer(applicationSvc applicationModel.Service, authSvc *auth.Service, encryptionKey string) *Server {
+func NewServer(applicationSvc applicationModel.Service, authSvc authModel.Service, userSvc userModel.Service, encryptionKey string) *Server {
 	return &Server{
 		applicationSvc: applicationSvc,
 		authSvc:        authSvc,
 		Key:            encryptionKey,
+		userSvc:        userSvc,
 	}
 }
 
 func (s *Server) SendVerifcationNotification(ctx context.Context, req *goSentinel.SendApplicationNotificationRequest) (*goSentinel.SendApplicationNotificationResponse, error) {
-	token, err := s.applicationSvc.SendVerifcationNotification(ctx, req.Email, req.Name)
+	applicationToken, err := s.applicationSvc.SendVerifcationNotification(ctx, req.Email, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("failed to send  notification: %v", err))
 	}
 	return &goSentinel.SendApplicationNotificationResponse{
-		Token: aws.StringValue(token),
+		ApplicationToken: aws.StringValue(applicationToken),
 	}, nil
 }
 
@@ -84,14 +84,24 @@ func (s *Server) GetApplicationToken(ctx context.Context, req *goSentinel.Applic
 }
 
 func (s *Server) GetUser(ctx context.Context, req *goSentinel.GetUserRequest) (*goSentinel.GetUserResponse, error) {
-	claims, ok := authModel.GetJWTClaimsFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("claims not found in context")
+
+	var (
+		email []string
+		id    []string
+	)
+
+	if req.ID != "" {
+		id = append(id, req.ID)
 	}
+
+	if req.Email != "" {
+		email = append(email, req.Email)
+	}
+
 	user, err := s.userSvc.GetUser(ctx, userModel.Filter{
-		Email: []string{req.Email},
-		ID:    []string{req.ID},
-	}, claims.ApplicationID)
+		Email: email,
+		ID:    id,
+	})
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -107,14 +117,12 @@ func (s *Server) GetUser(ctx context.Context, req *goSentinel.GetUserRequest) (*
 	}, nil
 }
 func (s *Server) RegisterUser(ctx context.Context, req *goSentinel.RegisterUserRequest) (*emptypb.Empty, error) {
-	claims, ok := authModel.GetJWTClaimsFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("claims not found in context")
-	}
+
 	err := s.userSvc.RegisterUser(ctx, userModel.User{
-		Name:  req.Name,
-		Email: req.Email,
-	}, claims.ApplicationID)
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+	})
 
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("user cannot be created try after some time: %v", err))
@@ -123,32 +131,37 @@ func (s *Server) RegisterUser(ctx context.Context, req *goSentinel.RegisterUserR
 }
 
 func (s *Server) UpdateUser(ctx context.Context, req *goSentinel.UpdateUserRequest) (*emptypb.Empty, error) {
-	claims, ok := authModel.GetJWTClaimsFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("claims not found in context")
-	}
+
 	err := s.userSvc.UpdateUser(ctx, userModel.UpdateUser{
 		ID:       req.ID,
 		Name:     req.Name,
 		Password: req.Password,
-	}, claims.ApplicationID)
+	})
 
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("user cannot be updated: %w", err))
+		return nil, status.Error(codes.Internal, fmt.Sprintf("user cannot be updated: %v", err))
 	}
 	return &emptypb.Empty{}, nil
 }
 
 func (s *Server) DeleteUser(ctx context.Context, req *goSentinel.DeleteUserRequest) (*emptypb.Empty, error) {
-	claims, ok := authModel.GetJWTClaimsFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("claims not found in context")
-	}
-	err := s.userSvc.DeleteUser(ctx, req.ID, claims.ApplicationID)
+
+	err := s.userSvc.DeleteUser(ctx, req.ID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("user cannot be deleted: %v", err))
 	}
 
 	return &emptypb.Empty{}, nil
 
+}
+
+func (s *Server) LoginUser(ctx context.Context, req *goSentinel.LoginUserRequest) (*goSentinel.LoginUserResponse, error) {
+	userToken, err := s.userSvc.LoginUser(ctx, req.Email, req.Password)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("login user :%v", err))
+	}
+
+	return &goSentinel.LoginUserResponse{
+		UserToken: aws.StringValue(userToken),
+	}, nil
 }

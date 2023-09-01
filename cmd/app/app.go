@@ -144,7 +144,7 @@ func (a *Application) registerGRPCEndpoints(services *services, log logModel.Log
 	}
 	grpcServer := grpc.NewServer(opts...)
 
-	goSentinel.RegisterGoSentinelServiceServer(grpcServer, rpc.NewServer(a.services.applicationSvc, a.services.authSvc, a.cfg.AuthConfig.EncryptionKey))
+	goSentinel.RegisterGoSentinelServiceServer(grpcServer, rpc.NewServer(a.services.applicationSvc, a.services.authSvc, a.services.userSvc, a.cfg.AuthConfig.EncryptionKey))
 
 	return grpcServer
 }

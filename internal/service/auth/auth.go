@@ -12,6 +12,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/nash567/GoSentinel/internal/service/auth/model"
@@ -27,36 +28,60 @@ func (s *Service) GenerateJWtToken(claims model.Claims) (string, error) {
 	return tokenString, nil
 }
 func (s *Service) VerifyJWTToken(token string) (*model.Claims, error) {
-	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := s.parseToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
+		if err := s.validateClaims(claims); err != nil {
+			return nil, err
+		}
+
+		userClaims := &model.UserJWTClaims{
+			UserID:    s.getFieldFromClaims(claims, "UserID"),
+			UserEmail: s.getFieldFromClaims(claims, "UserEmail"),
+		}
+
+		appClaims := &model.ApplicationJWTClaims{
+			ApplicationEmail: s.getFieldFromClaims(claims, "ApplicationEmail"),
+			Name:             s.getFieldFromClaims(claims, "Name"),
+			ApplicationID:    s.getFieldFromClaims(claims, "ApplicationID"),
+		}
+
+		return &model.Claims{
+			UserJWTClaims:        userClaims,
+			ApplicationJWTClaims: appClaims,
+		}, nil
+	}
+
+	return nil, errors.New("invalid token")
+}
+
+func (s *Service) parseToken(token string) (*jwt.Token, error) {
+	return jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(s.config.JwtSecret), nil
 	})
-	if err != nil {
-		return nil, fmt.Errorf("Token parsing error: %w", err)
-	}
-	if parsedToken == nil {
-		return nil, fmt.Errorf("invalid Token")
-
-	}
-
-	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, errors.New("Token error")
-	}
-
-	exp := claims["exp"].(float64)
-	if int64(exp) < time.Now().Local().Unix() {
-		return nil, errors.New("Token expired")
-	}
-
-	return &model.Claims{
-		Email: claims["email"].(string),
-	}, nil
-
 }
 
+func (s *Service) validateClaims(claims jwt.MapClaims) error {
+	exp, expOk := claims["exp"].(float64)
+	if !expOk || int64(exp) < time.Now().Unix() {
+		return errors.New("Token expired or expiration not found/invalid")
+	}
+	return nil
+}
+
+func (s *Service) getFieldFromClaims(claims jwt.MapClaims, fieldName string) *string {
+	fieldValue, ok := claims[fieldName].(string)
+	if ok {
+		return &fieldValue
+	}
+	return nil
+}
 func (s *Service) GenerateCredentials(length int) (*model.Credentials, error) {
 	creds := &model.Credentials{}
 	secret, err := s.GenerateSecret(s.config.SecretLength)
@@ -107,7 +132,7 @@ func (s *Service) EncryptData(data string, key string) (string, error) {
 
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], []byte(data))
-
+	fmt.Println("password encryption is....", base64.URLEncoding.EncodeToString(ciphertext))
 	return base64.URLEncoding.EncodeToString(ciphertext), nil
 }
 func generateAESKey(passphrase string) ([]byte, error) {
@@ -121,10 +146,12 @@ func (s *Service) DecryptData(encryptedData string, key string) ([]byte, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	AESkey, err := generateAESKey(key)
 	if err != nil {
 		return nil, err
 	}
+
 	block, err := aes.NewCipher(AESkey)
 	if err != nil {
 		return nil, err
@@ -132,11 +159,11 @@ func (s *Service) DecryptData(encryptedData string, key string) ([]byte, error) 
 
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
-
+	plaintext := make([]byte, len(ciphertext))
 	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(ciphertext, ciphertext)
-
-	return ciphertext, nil
+	stream.XORKeyStream(plaintext, ciphertext)
+	fmt.Println("cipher and plain text are....", string(ciphertext), string(plaintext))
+	return plaintext, nil
 }
 
 func (s *Service) GetApplicationToken(ctx context.Context, credentials model.Credentials) (*string, error) {
@@ -147,7 +174,9 @@ func (s *Service) GetApplicationToken(ctx context.Context, credentials model.Cre
 
 	if verified {
 		token, err := s.GenerateJWtToken(model.Claims{
-			ApplicationID: credentials.ApplicationID,
+			ApplicationJWTClaims: &model.ApplicationJWTClaims{
+				ApplicationID: aws.String(credentials.ApplicationID),
+			},
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.ApplicationJWTExpiry * time.Minute)),
 			},

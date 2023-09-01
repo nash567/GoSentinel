@@ -16,11 +16,10 @@ func buildFilter(filter *model.Filter) (string, []interface{}) {
 
 	f := &dbHelper.Filters{}
 
-	if filter.Email != nil {
+	if len(filter.Email) > 0 {
 		f.AppendInFilter(usersTable, "email", toInterfaceArr((filter.Email))...)
 	}
-
-	if filter.ID != nil {
+	if len(filter.ID) > 0 {
 		f.AppendInFilter(usersTable, "id", toInterfaceArr(filter.ID)...)
 	}
 	return f.Query(dbHelper.LogicalOperatorAnd, true), f.Params()

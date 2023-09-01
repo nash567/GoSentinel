@@ -14,8 +14,10 @@ type Service interface {
 	GenerateJWtToken(claims Claims) (string, error)
 	VerifyJWTToken(token string) (*Claims, error)
 	GenerateSecret(length int) (string, error)
-
+	GetApplicationToken(ctx context.Context, credentials Credentials) (*string, error)
 	AuthenticationInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error)
+	EncryptData(data string, key string) (string, error)
+	DecryptData(encryptedData string, key string) ([]byte, error)
 }
 
 type Repository interface {
