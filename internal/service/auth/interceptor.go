@@ -54,9 +54,7 @@ func (s *Service) AuthenticationInterceptor(
 		}
 
 	} else if info.FullMethod == "/goSentinel.goSentinelService/LoginUser" {
-		fmt.Println("i m here ")
 		if ctxWithClaims, err = s.authenticate(ctx, ""); err != nil {
-			fmt.Println("err")
 			return nil, status.Errorf(codes.Unauthenticated, "Unauthorized: %v", err)
 		}
 	}

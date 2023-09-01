@@ -132,7 +132,6 @@ func (s *Service) EncryptData(data string, key string) (string, error) {
 
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], []byte(data))
-	fmt.Println("password encryption is....", base64.URLEncoding.EncodeToString(ciphertext))
 	return base64.URLEncoding.EncodeToString(ciphertext), nil
 }
 func generateAESKey(passphrase string) ([]byte, error) {
@@ -162,7 +161,6 @@ func (s *Service) DecryptData(encryptedData string, key string) ([]byte, error) 
 	plaintext := make([]byte, len(ciphertext))
 	stream := cipher.NewCFBDecrypter(block, iv)
 	stream.XORKeyStream(plaintext, ciphertext)
-	fmt.Println("cipher and plain text are....", string(ciphertext), string(plaintext))
 	return plaintext, nil
 }
 

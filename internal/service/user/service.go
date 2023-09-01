@@ -40,15 +40,12 @@ func (s *Service) RegisterUser(ctx context.Context, user model.User) error {
 		return fmt.Errorf("generating uuid: %w", err)
 	}
 	user.ID = id.String()
-	fmt.Println("user password is................................", user.Password)
 
 	password, err := s.authSvc.EncryptData(user.Password, s.authConfig.EncryptionKey)
 	if err != nil {
 		return fmt.Errorf("error encrypting password: %w", err)
 	}
 	user.Password = password
-
-	fmt.Println("password encrypted is,,,,,,,,", password)
 
 	err = s.repo.RegisterUser(ctx, user, aws.StringValue(claims.ApplicationID))
 	if err != nil {

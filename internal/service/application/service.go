@@ -162,39 +162,6 @@ func (s *Service) getTemplate(mailData model.MailData) (string, error) {
 // 	return u.String(), nil
 // }
 
-// func (s *Service) AuthenticateApplication(ctx context.Context, input model.ApplicationSecret) error {
-// 	application, err := s.repo.GetApplication(ctx, &model.Filter{
-// 		Email: []string{input.Email},
-// 		ID:    []string{input.ID},
-// 	})
-// 	if err != nil {
-// 		return fmt.Errorf("application not found: %w", err)
-// 	}
-
-// 	verified, err := s.authSvc.VerifyApplicationIdentity(ctx, authModel.Credentials{
-// 		ID:     input.ID,
-// 		Secret: input.Secret,
-// 	})
-// 	if err != nil {
-// 		return fmt.Errorf("verify application identity: %w", err)
-// 	}
-
-// 	if verified {
-// 		token, err := s.authSvc.GenerateJWtToken(authModel.Claims{
-// 			Email: application.Email,
-// 			Name:  application.Name,
-// 			RegisteredClaims: jwt.RegisteredClaims{
-// 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * s.authConfig.JWTExpiration)),
-// 			},
-// 		})
-// 		if err != nil {
-// 			return fmt.Errorf("error generatig token :%w", err)
-// 		}
-// 		fmt.Println(token)
-// 	}
-
-//		return fmt.Errorf("application secret is wrong")
-//	}
 func (s *Service) CreateApplicationIdentity(ctx context.Context) error {
 	claims, ok := authModel.GetJWTClaimsFromContext(ctx)
 	if !ok {
