@@ -15,6 +15,5 @@ const (
 	createApplication = `INSERT INTO applications (id, name, email, status, is_verified)
 				VALUES ($1, $2, $3, $4, $5);
 	 `
-	getApplication    = `SELECT id,name,email,is_verified,status from applications`
-	UpdateApplication = `Update applications SET name = $1 WHERE id = $2`
+	getApplication = `SELECT id,name,email,is_verified,status,password from applications`
 )

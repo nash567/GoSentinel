@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -207,4 +208,50 @@ func (s *Service) GetApplicationIdentity(ctx context.Context) (*model.Applicatio
 		ApplicationSecret: applicationIdentity.Secret,
 	}, nil
 
+}
+
+func (s *Service) CreateApplicationPassword(ctx context.Context, application *model.UpdateApplication) error {
+	encryptedPassword, err := s.authSvc.EncryptData(application.Password, s.authConfig.EncryptionKey)
+	if err != nil {
+		return fmt.Errorf("error encrypting password :%w", err)
+	}
+	application.Password = encryptedPassword
+	err = s.repo.UpdateApplication(ctx, application)
+	if err != nil {
+		return fmt.Errorf("failed to update application password:%w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) LoginApplication(ctx context.Context, email, password string) (*string, error) {
+	application, err := s.repo.GetApplication(ctx, &model.Filter{
+		Email: []string{email},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get application : %w", err)
+	}
+
+	decryptedPassword, err := s.authSvc.DecryptData(application.Password, s.authConfig.EncryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt data : %w", err)
+	}
+	if strings.Compare(string(decryptedPassword), password) != 0 {
+		return nil, fmt.Errorf("application authentication failed")
+	}
+
+	token, err := s.authSvc.GenerateJWtToken(authModel.Claims{
+		UserJWTClaims: &authModel.UserJWTClaims{
+			UserEmail: aws.String(application.Email),
+			UserID:    aws.String(application.ID),
+		},
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * s.authConfig.ApplicationJWTExpiry)),
+		},
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("generate jwt token: %w", err)
+	}
+	return &token, nil
 }

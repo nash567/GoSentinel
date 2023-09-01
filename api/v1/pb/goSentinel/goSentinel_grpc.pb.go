@@ -25,9 +25,11 @@ const _ = grpc.SupportPackageIsVersion7
 type GoSentinelServiceClient interface {
 	SendVerifcationNotification(ctx context.Context, in *SendApplicationNotificationRequest, opts ...grpc.CallOption) (*SendApplicationNotificationResponse, error)
 	VerifyApplication(ctx context.Context, in *VerifyApplicationRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateApplicationPassword(ctx context.Context, in *CreateApplicationPasswordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetApplicationSecret(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Applicationcredentials, error)
+	LoginApplication(ctx context.Context, in *LoginApplicationRequest, opts ...grpc.CallOption) (*ApplicationTokenResponse, error)
 	CreateApplicationSecret(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	GetApplicationToken(ctx context.Context, in *Applicationcredentials, opts ...grpc.CallOption) (*GetApplicationTokenResponse, error)
+	GetApplicationToken(ctx context.Context, in *Applicationcredentials, opts ...grpc.CallOption) (*ApplicationTokenResponse, error)
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
@@ -61,9 +63,27 @@ func (c *goSentinelServiceClient) VerifyApplication(ctx context.Context, in *Ver
 	return out, nil
 }
 
+func (c *goSentinelServiceClient) CreateApplicationPassword(ctx context.Context, in *CreateApplicationPasswordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/goSentinel.goSentinelService/CreateApplicationPassword", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *goSentinelServiceClient) GetApplicationSecret(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Applicationcredentials, error) {
 	out := new(Applicationcredentials)
 	err := c.cc.Invoke(ctx, "/goSentinel.goSentinelService/GetApplicationSecret", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goSentinelServiceClient) LoginApplication(ctx context.Context, in *LoginApplicationRequest, opts ...grpc.CallOption) (*ApplicationTokenResponse, error) {
+	out := new(ApplicationTokenResponse)
+	err := c.cc.Invoke(ctx, "/goSentinel.goSentinelService/LoginApplication", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +99,8 @@ func (c *goSentinelServiceClient) CreateApplicationSecret(ctx context.Context, i
 	return out, nil
 }
 
-func (c *goSentinelServiceClient) GetApplicationToken(ctx context.Context, in *Applicationcredentials, opts ...grpc.CallOption) (*GetApplicationTokenResponse, error) {
-	out := new(GetApplicationTokenResponse)
+func (c *goSentinelServiceClient) GetApplicationToken(ctx context.Context, in *Applicationcredentials, opts ...grpc.CallOption) (*ApplicationTokenResponse, error) {
+	out := new(ApplicationTokenResponse)
 	err := c.cc.Invoke(ctx, "/goSentinel.goSentinelService/GetApplicationToken", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -139,9 +159,11 @@ func (c *goSentinelServiceClient) UpdateUser(ctx context.Context, in *UpdateUser
 type GoSentinelServiceServer interface {
 	SendVerifcationNotification(context.Context, *SendApplicationNotificationRequest) (*SendApplicationNotificationResponse, error)
 	VerifyApplication(context.Context, *VerifyApplicationRequest) (*emptypb.Empty, error)
+	CreateApplicationPassword(context.Context, *CreateApplicationPasswordRequest) (*emptypb.Empty, error)
 	GetApplicationSecret(context.Context, *emptypb.Empty) (*Applicationcredentials, error)
+	LoginApplication(context.Context, *LoginApplicationRequest) (*ApplicationTokenResponse, error)
 	CreateApplicationSecret(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
-	GetApplicationToken(context.Context, *Applicationcredentials) (*GetApplicationTokenResponse, error)
+	GetApplicationToken(context.Context, *Applicationcredentials) (*ApplicationTokenResponse, error)
 	RegisterUser(context.Context, *RegisterUserRequest) (*emptypb.Empty, error)
 	LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
@@ -159,13 +181,19 @@ func (UnimplementedGoSentinelServiceServer) SendVerifcationNotification(context.
 func (UnimplementedGoSentinelServiceServer) VerifyApplication(context.Context, *VerifyApplicationRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyApplication not implemented")
 }
+func (UnimplementedGoSentinelServiceServer) CreateApplicationPassword(context.Context, *CreateApplicationPasswordRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateApplicationPassword not implemented")
+}
 func (UnimplementedGoSentinelServiceServer) GetApplicationSecret(context.Context, *emptypb.Empty) (*Applicationcredentials, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetApplicationSecret not implemented")
+}
+func (UnimplementedGoSentinelServiceServer) LoginApplication(context.Context, *LoginApplicationRequest) (*ApplicationTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LoginApplication not implemented")
 }
 func (UnimplementedGoSentinelServiceServer) CreateApplicationSecret(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateApplicationSecret not implemented")
 }
-func (UnimplementedGoSentinelServiceServer) GetApplicationToken(context.Context, *Applicationcredentials) (*GetApplicationTokenResponse, error) {
+func (UnimplementedGoSentinelServiceServer) GetApplicationToken(context.Context, *Applicationcredentials) (*ApplicationTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetApplicationToken not implemented")
 }
 func (UnimplementedGoSentinelServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*emptypb.Empty, error) {
@@ -231,6 +259,24 @@ func _GoSentinelService_VerifyApplication_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoSentinelService_CreateApplicationPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateApplicationPasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoSentinelServiceServer).CreateApplicationPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/goSentinel.goSentinelService/CreateApplicationPassword",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoSentinelServiceServer).CreateApplicationPassword(ctx, req.(*CreateApplicationPasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GoSentinelService_GetApplicationSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
@@ -245,6 +291,24 @@ func _GoSentinelService_GetApplicationSecret_Handler(srv interface{}, ctx contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GoSentinelServiceServer).GetApplicationSecret(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoSentinelService_LoginApplication_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginApplicationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoSentinelServiceServer).LoginApplication(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/goSentinel.goSentinelService/LoginApplication",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoSentinelServiceServer).LoginApplication(ctx, req.(*LoginApplicationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -391,8 +455,16 @@ var GoSentinelService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GoSentinelService_VerifyApplication_Handler,
 		},
 		{
+			MethodName: "CreateApplicationPassword",
+			Handler:    _GoSentinelService_CreateApplicationPassword_Handler,
+		},
+		{
 			MethodName: "GetApplicationSecret",
 			Handler:    _GoSentinelService_GetApplicationSecret_Handler,
+		},
+		{
+			MethodName: "LoginApplication",
+			Handler:    _GoSentinelService_LoginApplication_Handler,
 		},
 		{
 			MethodName: "CreateApplicationSecret",

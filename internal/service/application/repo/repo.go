@@ -55,6 +55,7 @@ func (r *Repository) GetApplication(ctx context.Context, filter *model.Filter) (
 		&application.Email,
 		&application.IsVerified,
 		&application.Status,
+		&application.Password,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("application not found in db: %w", err)
@@ -63,7 +64,8 @@ func (r *Repository) GetApplication(ctx context.Context, filter *model.Filter) (
 }
 
 func (r *Repository) UpdateApplication(ctx context.Context, application *model.UpdateApplication) error {
-	result, err := r.db.Exec(UpdateApplication, application.Name, application.ID)
+	query, params := buildUpdateQuery(application)
+	result, err := r.db.Exec(query, params)
 	if err != nil {
 		return fmt.Errorf("update file: %w", err)
 	}

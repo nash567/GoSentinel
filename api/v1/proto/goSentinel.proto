@@ -55,8 +55,8 @@ message User{
    string applicationSecret=2;
  }
 
- message GetApplicationTokenResponse{
-  string token = 1;
+ message ApplicationTokenResponse{
+  string applicationToken = 1;
  }
 
  message ApplicationSecretRequest {
@@ -94,6 +94,15 @@ message UpdateUserRequest{
   string name=2;
   string password=3;
 }
+message CreateApplicationPasswordRequest{
+  string password =2;
+}
+
+message LoginApplicationRequest {
+  string email = 1;
+  string password =2;
+}
+
 
  service goSentinelService{
     rpc SendVerifcationNotification(SendApplicationNotificationRequest) returns (SendApplicationNotificationResponse);  
@@ -102,18 +111,32 @@ message UpdateUserRequest{
           get: "/v1/verify/{key}"
       };
   };
+
+  rpc CreateApplicationPassword(CreateApplicationPasswordRequest)returns (google.protobuf.Empty){
+    option (google.api.http)={
+       post: "/v1/password"
+   };
+   }
+
   rpc GetApplicationSecret(google.protobuf.Empty)returns (Applicationcredentials){
    option (google.api.http)={
       get: "/v1/secret"
   };
   }
+  rpc LoginApplication(LoginApplicationRequest)returns (ApplicationTokenResponse){
+    option (google.api.http)={
+       get: "/v1/application/login"
+   };
+   }
+ 
+
   rpc CreateApplicationSecret(google.protobuf.Empty)returns (google.protobuf.Empty){
     option (google.api.http)={
        post: "/v1/secret"
    };
    }
 
-  rpc GetApplicationToken(Applicationcredentials)returns (GetApplicationTokenResponse);
+  rpc GetApplicationToken(Applicationcredentials)returns (ApplicationTokenResponse);
 
   // user rpcs
 

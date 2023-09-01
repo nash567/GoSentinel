@@ -9,6 +9,7 @@ type Application struct {
 	Name         string `json:"name"`
 	Email        string `json:"email"`
 	Status       string `json:"status"`
+	Password     string `json:"password"`
 	IsVerified   bool   `json:"is_verified"`
 	SecretViewed bool   `json:"secret_viewed"`
 }
@@ -28,7 +29,7 @@ type VerifyApplicationResponse struct {
 	ApplicationSecret string `json:"client_secret"`
 }
 type UpdateApplication struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	SecretViewed bool   `json:"secret_viewed"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }

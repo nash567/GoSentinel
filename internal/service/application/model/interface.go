@@ -9,6 +9,8 @@ type Service interface {
 	VerifyApplication(ctx context.Context, key string) error
 	GetApplicationIdentity(ctx context.Context) (*ApplicationSecret, error)
 	CreateApplicationIdentity(ctx context.Context) error
+	CreateApplicationPassword(ctx context.Context, application *UpdateApplication) error
+	LoginApplication(ctx context.Context, email, password string) (*string, error)
 }
 
 type Repository interface {

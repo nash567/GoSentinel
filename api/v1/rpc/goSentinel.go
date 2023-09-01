@@ -50,6 +50,31 @@ func (s *Server) VerifyApplication(ctx context.Context, req *goSentinel.VerifyAp
 	}
 	return &emptypb.Empty{}, nil
 }
+func (s *Server) CreateApplicationPassword(ctx context.Context, req *goSentinel.CreateApplicationPasswordRequest) (*emptypb.Empty, error) {
+	claims, ok := authModel.GetJWTClaimsFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("claims not found in context")
+	}
+	err := s.applicationSvc.CreateApplicationPassword(ctx, &applicationModel.UpdateApplication{
+		ID:       aws.StringValue(claims.ApplicationID),
+		Password: req.Password,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("password cannot be created: %v", err))
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (s *Server) LoginApplication(ctx context.Context, req *goSentinel.LoginApplicationRequest) (*goSentinel.ApplicationTokenResponse, error) {
+	token, err := s.applicationSvc.LoginApplication(ctx, req.Email, req.Password)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, fmt.Sprintf("invalid credentials: %v", err))
+	}
+	return &goSentinel.ApplicationTokenResponse{
+		ApplicationToken: aws.StringValue(token),
+	}, nil
+}
+
 func (s *Server) CreateApplicationSecret(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
 	err := s.applicationSvc.CreateApplicationIdentity(ctx)
 	if err != nil {
@@ -70,7 +95,7 @@ func (s *Server) GetApplicationSecret(ctx context.Context, _ *emptypb.Empty) (*g
 	}, nil
 }
 
-func (s *Server) GetApplicationToken(ctx context.Context, req *goSentinel.Applicationcredentials) (*goSentinel.GetApplicationTokenResponse, error) {
+func (s *Server) GetApplicationToken(ctx context.Context, req *goSentinel.Applicationcredentials) (*goSentinel.ApplicationTokenResponse, error) {
 	token, err := s.authSvc.GetApplicationToken(ctx, authModel.Credentials{
 		ApplicationID:     req.ApplicationID,
 		ApplicationSecret: req.ApplicationSecret,
@@ -78,8 +103,8 @@ func (s *Server) GetApplicationToken(ctx context.Context, req *goSentinel.Applic
 	if err != nil {
 		return nil, fmt.Errorf("appliation not verified: %v", err)
 	}
-	return &goSentinel.GetApplicationTokenResponse{
-		Token: aws.StringValue(token),
+	return &goSentinel.ApplicationTokenResponse{
+		ApplicationToken: aws.StringValue(token),
 	}, nil
 }
 

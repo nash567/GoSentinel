@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"strconv"
+
 	"github.com/nash567/GoSentinel/internal/service/application/model"
 	dbHelper "github.com/nash567/GoSentinel/pkg/db/helper"
 )
@@ -44,4 +46,32 @@ func toInterfaceArr[T int | string](v []T) []interface{} {
 		out = append(out, i)
 	}
 	return out
+}
+
+func buildUpdateQuery(application *model.UpdateApplication) (string, []string) {
+	query := "UPDATE applications SET "
+	var params []string
+	var paramCount int
+
+	if application.Name != "" {
+		paramCount++
+		query += "name = $" + strconv.Itoa(paramCount) + ", "
+		params = append(params, application.Name)
+	}
+
+	if application.Password != "" {
+		paramCount++
+		query += "password = $" + strconv.Itoa(paramCount) + ", "
+		params = append(params, application.Password)
+	}
+
+	// Remove the trailing ", " from the query
+	if paramCount > 0 {
+		query = query[:len(query)-2]
+	}
+
+	query += " WHERE id = $" + strconv.Itoa(paramCount+1)
+	params = append(params, application.ID)
+
+	return query, params
 }
