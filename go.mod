@@ -14,7 +14,8 @@ require (
 	github.com/jinzhu/configor v1.2.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
-	github.com/lib/pq v1.10.2
+	github.com/lib/pq v1.10.9
+	github.com/pressly/goose/v3 v3.15.0
 	github.com/rs/cors v1.9.0
 	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b
 	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e

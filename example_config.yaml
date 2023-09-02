@@ -9,7 +9,7 @@ grpc_server:
 database:
   name: goSentinel
   user: goSentinel
-  password: password
+  password: test
   port: 5425
   host: localhost
   timeout: 60
@@ -20,17 +20,17 @@ database:
 mailer:
   host: "smtp.gmail.com"
   port: 587
-  from : "bipen.c@gopherslab.com"
-  username: bipen.c@gopherslab.com
-  password: apandhgfsewpptro
+  from : "test@abcd.com"
+  username: test
+  password: test
 
 application_config:
   verificationtemplate: ./internal/resources/template/verification.html
   verificationexpiry: 5
 auth_config:
   jwtsecret: "this is my secret"
-  verificationjwtexpiration: 5
-  encryptionkey: "encryptionkey"
+  verificationjwtexpiration: 15
+  encryptionkey: "testkey"
   secretlength: 32
   applicationjwtexpiry: 30
   userjwtexpiry: 30

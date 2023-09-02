@@ -1,7 +1,8 @@
 package app
 
 import (
-	"github.com/jmoiron/sqlx"
+	"database/sql"
+
 	"github.com/nash567/GoSentinel/internal/config"
 	mailSvc "github.com/nash567/GoSentinel/internal/notifications/email"
 	mailModel "github.com/nash567/GoSentinel/internal/notifications/email/model"
@@ -34,7 +35,7 @@ type repos struct {
 	userRepo        userModel.Repository
 }
 
-func (a *Application) buildServices(db *sqlx.DB, log logModel.Logger, cfg *config.Config, cacheSvc cache.Cache) *services {
+func (a *Application) buildServices(db *sql.DB, log logModel.Logger, cfg *config.Config, cacheSvc cache.Cache) *services {
 	svc := &services{
 		cfg: cfg,
 	}
@@ -51,9 +52,9 @@ func (s *services) buildServies(repo repos, cacheSvc cache.Cache, log logModel.L
 	s.applicationSvc = applicationSvc.NewService(&s.cfg.ApplicationConfig, s.mailSvc, repo.applicationRepo, cacheSvc, s.cfg.AuthConfig, s.authSvc)
 }
 
-func (r *repos) buildRepos(db *sqlx.DB) {
-	r.applicationRepo = application.NewRepository(db.DB)
-	r.authRepo = authRepo.NewRepository(db.DB)
-	r.userRepo = userRepo.NewRepository(db.DB)
+func (r *repos) buildRepos(db *sql.DB) {
+	r.applicationRepo = application.NewRepository(db)
+	r.authRepo = authRepo.NewRepository(db)
+	r.userRepo = userRepo.NewRepository(db)
 
 }

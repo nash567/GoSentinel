@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/jmoiron/sqlx"
 	"github.com/nash567/GoSentinel/api/v1/pb/goSentinel"
 	"github.com/nash567/GoSentinel/api/v1/rpc"
 	"github.com/nash567/GoSentinel/internal/config"
@@ -27,7 +27,7 @@ import (
 const timeout = 5 * time.Second
 
 type Application struct {
-	db         *sqlx.DB
+	db         *sql.DB
 	cache      cache.Cache
 	grpcServer *grpc.Server
 	httpServer *http.Server
@@ -61,7 +61,7 @@ func (a *Application) Init(ctx context.Context, configFile string, migrationPath
 	}
 	a.db = db
 	a.log.WithField("host", a.cfg.DB.Host).WithField("port", a.cfg.DB.Port).Info("created database connection successfully")
-
+	Migrate(a.log, a.db, &a.cfg.DB, migrationPath)
 	a.router = mux.NewRouter()
 	a.cache, err = redis.New(ctx, &a.cfg.Redis)
 	if err != nil {
