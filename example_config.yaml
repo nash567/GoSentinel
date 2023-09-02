@@ -1,0 +1,36 @@
+app_name: goSentinel
+env: dev
+http_server:
+  host: localhost
+  port: 8080
+grpc_server:
+  host: localhost
+  port: 9094  
+database:
+  name: goSentinel
+  user: goSentinel
+  password: password
+  port: 5425
+  host: localhost
+  timeout: 60
+  # migrations:
+  #   verbose: false
+  #   dialect: postgres
+  #   down: false
+mailer:
+  host: "smtp.gmail.com"
+  port: 587
+  from : "bipen.c@gopherslab.com"
+  username: bipen.c@gopherslab.com
+  password: apandhgfsewpptro
+
+application_config:
+  verificationtemplate: ./internal/resources/template/verification.html
+  verificationexpiry: 5
+auth_config:
+  jwtsecret: "this is my secret"
+  verificationjwtexpiration: 5
+  encryptionkey: "encryptionkey"
+  secretlength: 32
+  applicationjwtexpiry: 30
+  userjwtexpiry: 30

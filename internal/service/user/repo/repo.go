@@ -30,6 +30,7 @@ func (r *Repository) RegisterUser(ctx context.Context, user model.User, applicat
 		user.IsActive,
 		user.CreatedAt,
 		user.UpdatedAt,
+		user.Password,
 	)
 	if err != nil {
 		return fmt.Errorf("insert user in db failed: %w", err)

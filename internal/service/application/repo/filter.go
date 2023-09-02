@@ -48,9 +48,9 @@ func toInterfaceArr[T int | string](v []T) []interface{} {
 	return out
 }
 
-func buildUpdateQuery(application *model.UpdateApplication) (string, []string) {
+func buildUpdateQuery(application *model.UpdateApplication) (string, []interface{}) {
 	query := "UPDATE applications SET "
-	var params []string
+	var params []interface{}
 	var paramCount int
 
 	if application.Name != "" {

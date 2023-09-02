@@ -65,7 +65,7 @@ func (r *Repository) GetApplication(ctx context.Context, filter *model.Filter) (
 
 func (r *Repository) UpdateApplication(ctx context.Context, application *model.UpdateApplication) error {
 	query, params := buildUpdateQuery(application)
-	result, err := r.db.Exec(query, params)
+	result, err := r.db.Exec(query, params...)
 	if err != nil {
 		return fmt.Errorf("update file: %w", err)
 	}

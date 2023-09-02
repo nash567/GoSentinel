@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -57,6 +56,10 @@ func (s *Service) AuthenticationInterceptor(
 		if ctxWithClaims, err = s.authenticate(ctx, ""); err != nil {
 			return nil, status.Errorf(codes.Unauthenticated, "Unauthorized: %v", err)
 		}
+	} else if info.FullMethod == "/goSentinel.goSentinelService/CreateApplicationPassword" {
+		if ctxWithClaims, err = s.authenticate(ctx, ""); err != nil {
+			return nil, status.Errorf(codes.Unauthenticated, "Unauthorized: %v", err)
+		}
 	}
 
 	// Calls the handler
@@ -98,7 +101,6 @@ func (s *Service) authenticate(ctx context.Context, userToken string) (context.C
 
 	if userToken != "" {
 		if userClaims, err := s.VerifyJWTToken(userToken); err == nil {
-			fmt.Printf("claims are ...%+v", userClaims.UserJWTClaims)
 			if userClaims.UserJWTClaims.UserEmail == nil {
 				return nil, status.Errorf(codes.Unauthenticated, "invalid user token: %v", err)
 			}
