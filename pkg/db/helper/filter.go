@@ -29,8 +29,9 @@ func (o Operator) ToString() string {
 }
 
 type Filters struct {
-	clause []string      // clause eg ->> columnName in(?,?,?,>)
-	params []interface{} // params will be the values of ?
+	clause          []string      // clause eg ->> columnName in(?,?,?,>)
+	params          []interface{} // params will be the values of ?
+	queryParamCount int           // count of next query param
 }
 
 func (f *Filters) Query(log LogicalOperator, appendWhere bool) string {
@@ -59,10 +60,20 @@ func (f *Filters) buildMultiParamCondition(column string, operator Operator, par
 		return
 	}
 	q := ""
-	for i := 2; i <= len(params); i++ {
-		q += fmt.Sprintf(",$%s", strconv.Itoa(i))
+	for i := 0; i < len(params); i++ {
+		if f.queryParamCount == 0 {
+			f.queryParamCount = 1
+
+		}
+		q += fmt.Sprintf(",$%s", strconv.Itoa(f.queryParamCount))
+
+		f.queryParamCount++
 	}
-	f.clause = append(f.clause, column+operator.ToString()+"($1"+q+")")
+	if q[0] == ',' {
+		f.clause = append(f.clause, column+operator.ToString()+"("+q[1:]+")")
+	} else {
+		f.clause = append(f.clause, column+operator.ToString()+"("+q+")")
+	}
 	f.params = append(f.params, params...)
 }
 

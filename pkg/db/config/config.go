@@ -11,4 +11,6 @@ type Config struct {
 	MaxConnLifeTime time.Duration `yaml:"max-conn-life" env:"DB_CONN_MAX_LIFE_TIME"`
 	MaxConns        int           `yaml:"max-conns" env:"DB_MAX_CONNS"`
 	MaxIdleConns    int           `yaml:"max-idle-conns" env:"DB_MAX_IDLE_CONNS"`
+	Dialect         string        `default:"postgres"`
+	Verbose         bool
 }

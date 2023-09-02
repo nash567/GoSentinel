@@ -2,21 +2,10 @@ syntax = "proto3";
 
 package goSentinel;
 
-option go_package ="./goSentinel"
+option go_package ="./goSentinel";
 
-import "google/protobuf/timestamp.proto";
-
-
-message Project {
-    string project_id  = 1;
-    string project_name  = 2;
-    string type = 3;
-    string client_id = 4;
-    string client_name = 5;
-    string currency = 6;
-    string deleted_at = 7;
-    string status = 8;
-}
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 
 message User{
@@ -26,22 +15,20 @@ message User{
     string password = 4;
     string token = 5;
     string role =6;
+    string isActive = 7;
 }
 
  message Application {
     string id = 1;
     string name = 2;
     string email=3;
+    string status = 4;
+    string isVerified = 5;
  }
+  message VerifyApplicationRequest{
+    string key = 1;
+  }
 
- message RegisterApplicationRequest{
-    string name = 1;
-    string email=2;
- }
- message RegisterApplicationResponse{
-   string clientID = 1;
-   string clientSecret=2;
-}
 
  message GetApplicationRequest{
     string id = 1;
@@ -52,13 +39,113 @@ message User{
     string name = 1;
     string email=2;
     string password = 3;
-    string token = 4;
     string role = 5;
  }
 
- service goSentinelService{
-    rpc SendVerifcationNotification(string);  
-    rpc RegisterApplication(RegisterApplicationRequest) returns (RegisterApplicationResponse);
-    rpc GetApplication(GetApplicationRequest) returns (Application);
-    
+ message SendApplicationNotificationRequest{
+   string email = 1;
+   string name = 2;
  }
+ message SendApplicationNotificationResponse{
+   string applicationToken = 1;
+ }
+
+ message Applicationcredentials{
+   string applicationID = 1;
+   string applicationSecret=2;
+ }
+
+ message ApplicationTokenResponse{
+  string applicationToken = 1;
+ }
+
+ message ApplicationSecretRequest {
+  string applicationID = 1;
+ }
+
+ message LoginUserRequest {
+  string email = 1;
+  string password = 2;
+ }
+
+ message LoginUserResponse{
+  string userToken = 1;
+ }
+
+ message GetUserRequest{
+  string userToken = 1;
+  string ID = 2;
+  string email = 3;
+ }
+
+ message GetUserResponse{
+  string ID = 1;
+  string name = 2;
+  string email = 3;
+ }
+
+
+message DeleteUserRequest{
+  string ID = 1;
+}
+
+message UpdateUserRequest{
+  string ID = 1;
+  string name=2;
+  string password=3;
+}
+message CreateApplicationPasswordRequest{
+  string password =2;
+}
+
+message LoginApplicationRequest {
+  string email = 1;
+  string password =2;
+}
+
+
+ service goSentinelService{
+    rpc SendVerifcationNotification(SendApplicationNotificationRequest) returns (SendApplicationNotificationResponse);  
+    rpc VerifyApplication(VerifyApplicationRequest)returns (google.protobuf.Empty){
+      option (google.api.http)={
+          get: "/v1/verify/{key}"
+      };
+  };
+
+  rpc CreateApplicationPassword(CreateApplicationPasswordRequest)returns (google.protobuf.Empty){
+    option (google.api.http)={
+       post: "/v1/password"
+   };
+   }
+
+  rpc GetApplicationSecret(google.protobuf.Empty)returns (Applicationcredentials){
+   option (google.api.http)={
+      get: "/v1/secret"
+  };
+  }
+  rpc LoginApplication(LoginApplicationRequest)returns (ApplicationTokenResponse){
+    option (google.api.http)={
+       get: "/v1/application/login"
+   };
+   }
+ 
+
+  rpc CreateApplicationSecret(google.protobuf.Empty)returns (google.protobuf.Empty){
+    option (google.api.http)={
+       post: "/v1/secret"
+   };
+   }
+
+  rpc GetApplicationToken(Applicationcredentials)returns (ApplicationTokenResponse);
+
+  // user rpcs
+
+  rpc RegisterUser(RegisterUserRequest) returns (google.protobuf.Empty);
+  rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
+  rpc GetUser(GetUserRequest)returns (GetUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty);
+  rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty);
+  
+ }
+
+

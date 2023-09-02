@@ -21,8 +21,11 @@ type Logger interface {
 	// Error emits an "ERROR" level log message.
 	Error(msg string, args ...any)
 
+	Errorf(format string, args ...interface{})
 	// Fatal emits a "FATAL" level log message.
 	Fatal(msg string, args ...any)
+
+	Fatalf(format string, args ...interface{})
 
 	// WithField adds a field to the logger and returns a new Logger.
 	WithField(key string, value any) Logger
